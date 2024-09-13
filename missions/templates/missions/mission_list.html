@@ -1,0 +1,11 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<h1>Missions</h1>
+<a href="{% url 'mission_create' %}">Create New Mission</a>
+<ul>
+{% for mission in missions %}
+    <li><a href="{% url 'mission_detail' mission.id %}">{{ mission.question }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

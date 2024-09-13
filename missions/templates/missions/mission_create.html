@@ -1,0 +1,123 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<h1>Create New Mission</h1>
+<form method="post" id="missionForm">
+    {% csrf_token %}
+    <div>
+        <label for="id_course">Course:</label>
+        <select name="course" id="id_course" required>
+            {% for value, label in course_choices.items %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="id_question">Question:</label>
+        <textarea name="question" id="id_question" required></textarea>
+    </div>
+    <div>
+        <label for="id_type">Type:</label>
+        <select name="type" id="id_type" required onchange="toggleFields()">
+            {% for value, label in mission_types.items %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="id_exam_type">Exam Type:</label>
+        <select name="exam_type" id="id_exam_type" required>
+            {% for value, label in exam_types.items %}
+                <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div id="optionsContainer" style="display: none;">
+        <label>Options:</label>
+        <div id="optionsList"></div>
+        <button type="button" id="addOption" onclick="addOption()">Add Option</button>
+    </div>
+    <div id="codeTemplateContainer" style="display: none;">
+        <label for="id_code_template">Code Template:</label>
+        <textarea name="code_template" id="id_code_template" rows="10" cols="50"></textarea>
+    </div>
+    <div>
+        <label for="id_correct_answer">Correct Answer:</label>
+        <input type="text" name="correct_answer" id="id_correct_answer" required>
+    </div>
+    <button type="submit">Create</button>
+</form>
+<a href="{% url 'mission_list' %}">Back to Mission List</a>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    toggleFields();  // 페이지 로드 시 필드 상태를 초기화
+
+    const form = document.getElementById('missionForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const options = [];
+
+        for (let [key, value] of formData.entries()) {
+            if (key.startsWith('option_')) {
+                options.push(value);
+            }
+        }
+
+        formData.set('options', JSON.stringify(options));
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.href = "{% url 'mission_list' %}";
+            } else {
+                return response.json();
+            }
+        }).then(data => {
+            if (data && data.errors) {
+                // 에러 처리
+                console.error(data.errors);
+            }
+        });
+    });
+});
+
+function toggleFields() {
+    const typeSelect = document.getElementById('id_type');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const codeTemplateContainer = document.getElementById('codeTemplateContainer');
+
+    if (typeSelect.value === 'multiple_choice') {
+        optionsContainer.style.display = 'block';
+        codeTemplateContainer.style.display = 'none';
+    } else if (typeSelect.value === 'code_submission') {
+        optionsContainer.style.display = 'none';
+        codeTemplateContainer.style.display = 'block';
+    } else {
+        optionsContainer.style.display = 'none';
+        codeTemplateContainer.style.display = 'none';
+    }
+}
+
+function addOption() {
+    const optionsList = document.getElementById('optionsList');
+    const optionCount = optionsList.children.length + 1;
+    const optionDiv = document.createElement('div');
+    optionDiv.innerHTML = `
+        <input type="text" name="option_${optionCount}" required>
+        <button type="button" onclick="removeOption(this)">Remove</button>
+    `;
+    optionsList.appendChild(optionDiv);
+}
+
+function removeOption(button) {
+    const optionsList = document.getElementById('optionsList');
+    optionsList.removeChild(button.parentElement);
+}
+</script>
+{% endblock %}

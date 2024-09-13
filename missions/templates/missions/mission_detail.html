@@ -1,0 +1,56 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<h1>{{ mission.title }}</h1>
+<p>{{ mission.description }}</p>
+<p>Type: {{ mission.type }}</p>
+{% if mission.type == 'multiple_choice' %}
+    <form id="submissionForm" method="post" action="{% url 'mission_submit' mission.id %}">
+        {% csrf_token %}
+        <p>Options:</p>
+        {% for option in options %}
+            <label>
+                <input type="checkbox" name="options" value="{{ option }}">
+                {{ option }}
+            </label><br>
+        {% endfor %}
+        <button type="submit">Submit Answer</button>
+    </form>
+{% elif mission.type == 'code_submission' %}
+    <form id="submissionForm" method="post" action="{% url 'mission_submit' mission.id %}">
+        {% csrf_token %}
+        <p>Submit your code:</p>
+        <textarea name="submitted_code" rows="10" cols="50">{{ mission.code_template }}</textarea><br>
+        <button type="submit">Submit Code</button>
+    </form>
+{% endif %}
+<a href="{% url 'mission_list' %}">Back to Mission List</a>
+
+<script>
+document.getElementById('submissionForm').addEventListener('submit', function(event) {
+    event.preventDefault();  // 기본 폼 제출 동작을 막음
+
+    var form = event.target;
+    var formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.is_correct) {
+            alert('정답입니다!');
+        } else {
+            alert('오답입니다. 다시 시도해보세요.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
+{% endblock %}
