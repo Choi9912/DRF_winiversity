@@ -1,0 +1,28 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Welcome to EduPlatform{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Welcome to EduPlatform</h1>
+    <p class="lead">Empowering learners and educators through innovative online education.</p>
+    <hr class="my-4">
+    <p>Join our community to access high-quality courses, interact with expert instructors, and advance your skills.</p>
+    <a class="btn btn-primary btn-lg" href="{% url 'user-register' %}" role="button">Get Started</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Learn Anytime, Anywhere</h2>
+        <p>Access our courses from any device, at any time. Learn at your own pace and on your own schedule.</p>
+    </div>
+    <div class="col-md-4">
+        <h2>Expert Instructors</h2>
+        <p>Our courses are taught by industry professionals and academic experts, ensuring high-quality education.</p>
+    </div>
+    <div class="col-md-4">
+        <h2>Interactive Learning</h2>
+        <p>Engage with instructors and fellow students through forums, live sessions, and collaborative projects.</p>
+    </div>
+</div>
+{% endblock %}
