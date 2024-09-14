@@ -1,3 +1,4 @@
+import json
 from django.db import models
 from django.contrib.auth import get_user_model
 
@@ -6,10 +7,13 @@ User = get_user_model()
 
 class Mission(models.Model):
     COURSE_CHOICES = [
-        ("math", "수학"),
-        ("science", "과학"),
-        ("history", "역사"),
-        ("literature", "문학"),
+        ("github", "GitHub"),
+        ("html_css", "HTML/CSS"),
+        ("js", "JavaScript"),
+        ("express", "Express"),
+        ("mongodb", "MongoDB"),
+        ("aws", "AWS"),
+        ("project", "Project"),
     ]
 
     MISSION_TYPES = (
@@ -23,25 +27,42 @@ class Mission(models.Model):
     )
 
     course = models.CharField(max_length=20, choices=COURSE_CHOICES)
-    # course 만들어지면 foreignkey로 변경할예정
-    # course = models.ForeignKey("courses.Course", on_delete=models.CASCADE, null=True, blank=True)
     question = models.TextField()
     type = models.CharField(max_length=20, choices=MISSION_TYPES)
     exam_type = models.CharField(max_length=10, choices=EXAM_TYPES)
-    options = models.JSONField(blank=True, null=True)
-    correct_answer = models.CharField(
-        max_length=200, blank=True, null=True
-    )  # 문자열로 저장
-    code_template = models.TextField(
-        blank=True, null=True
-    )  # 코드 제출형 문제를 위한 필드
+
+
+class MultipleChoiceMission(models.Model):
+    mission = models.OneToOneField(
+        Mission, on_delete=models.CASCADE, related_name="multiple_choice"
+    )
+    options = models.TextField()  # JSONField 대신 TextField 사용
+    correct_answer = models.CharField(max_length=1)  # A, B, C, D, E 중 하나
+
+    def set_options(self, options):
+        self.options = json.dumps(options)
+
+    def get_options(self):
+        try:
+            return json.loads(self.options)
+        except json.JSONDecodeError:
+            # JSON 파싱에 실패한 경우, 문자열을 직접 분할
+            return [
+                opt.strip()
+                for opt in self.options.strip("[]").split(",")
+                if opt.strip()
+            ]
 
 
 class MissionSubmission(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    selected_options = models.JSONField(blank=True, null=True)
-    submitted_code = models.TextField(
-        blank=True, null=True
-    )  # 코드 제출형 문제를 위한 필드
-    is_correct = models.BooleanField(default=False)  # 정답 여부를 저장
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    is_correct = models.BooleanField(default=False)
+
+
+class MultipleChoiceSubmission(models.Model):
+    submission = models.OneToOneField(
+        MissionSubmission, on_delete=models.CASCADE, related_name="multiple_choice"
+    )
+    selected_option = models.CharField(max_length=1)  # A, B, C, D, E 중 하나

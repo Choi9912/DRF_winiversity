@@ -1,11 +1,16 @@
 {% extends 'accounts/base.html' %}
 
 {% block content %}
-<h1>Missions</h1>
-<a href="{% url 'mission_create' %}">Create New Mission</a>
+<h1>미션 목록</h1>
 <ul>
 {% for mission in missions %}
-    <li><a href="{% url 'mission_detail' mission.id %}">{{ mission.question }}</a></li>
+    <li>
+        <a href="{% url 'mission-detail' mission.id %}">
+            {{ mission.question|truncatechars:50 }} - {{ mission.get_course_display }}
+        </a>
+    </li>
+{% empty %}
+    <li>현재 사용 가능한 미션이 없습니다.</li>
 {% endfor %}
 </ul>
 {% endblock %}

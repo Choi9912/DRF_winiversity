@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 상세 정보</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #333; }
+        .payment-info { background-color: #f4f4f4; padding: 20px; border-radius: 5px; }
+        .payment-info p { margin: 10px 0; }
+        .button { display: inline-block; background-color: #007bff; color: #fff; padding: 10px 15px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>결제 상세 정보</h1>
+        <div class="payment-info">
+            <p><strong>결제 금액:</strong> {{ payment.amount }}원</p>
+            <p><strong>결제 일자:</strong> {{ payment.payment_date|date:"Y-m-d H:i" }}</p>
+            <p><strong>결제 방식:</strong> {{ payment.get_payment_method_display }}</p>
+            <p><strong>구독 만료일:</strong> {{ user.subscription_end_date|date:"Y-m-d" }}</p>
+            <p><strong>환불 가능 여부:</strong> 
+                {% if payment.is_refundable %}
+                    가능
+                {% else %}
+                    불가능
+                {% endif %}
+            </p>
+        </div>
+        <p>
+            <a href="{% url 'payment-receipt' payment.id %}" class="button">영수증 발급</a>
+            {% if payment.is_refundable %}
+                <a href="{% url 'payment-refund' payment.id %}" class="button">환불 신청</a>
+            {% endif %}
+        </p>
+    </div>
+</body>
+</html>

@@ -1,49 +1,100 @@
-import json
 from rest_framework import serializers
-from .models import Mission, MissionSubmission
+from .models import (
+    Mission,
+    MultipleChoiceMission,
+    MissionSubmission,
+    MultipleChoiceSubmission,
+)
 
 
-class MissionSerializer(serializers.ModelSerializer):
-    options = serializers.CharField(required=False)
+class MultipleChoiceMissionSerializer(serializers.ModelSerializer):
+    options = serializers.ListField(child=serializers.CharField(), source="get_options")
 
     class Meta:
-        model = Mission
-        fields = [
-            "id",
-            "course",
-            "question",
-            "type",
-            "exam_type",
-            "options",
-            "correct_answer",
-        ]
+        model = MultipleChoiceMission
+        fields = ["options", "correct_answer"]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["type"] = dict(Mission.MISSION_TYPES).get(
-            instance.type, instance.type
-        )
-        representation["exam_type"] = dict(Mission.EXAM_TYPES).get(
-            instance.exam_type, instance.exam_type
-        )
-
-        # options를 JSON에서 리스트로 변환
-        if instance.options:
-            representation["options"] = json.loads(instance.options)
         return representation
 
-    def to_internal_value(self, data):
-        # options가 문자열로 들어오면 JSON으로 변환
-        if "options" in data and isinstance(data["options"], str):
-            try:
-                data["options"] = json.dumps(json.loads(data["options"]))
-            except json.JSONDecodeError:
-                # 유효한 JSON이 아니면 그대로 둡니다.
-                pass
-        return super().to_internal_value(data)
+    def create(self, validated_data):
+        options = validated_data.pop("options", [])
+        instance = super().create(validated_data)
+        instance.set_options(options)
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        options = validated_data.pop("options", None)
+        instance = super().update(instance, validated_data)
+        if options is not None:
+            instance.set_options(options)
+            instance.save()
+        return instance
+
+
+class MissionSerializer(serializers.ModelSerializer):
+    multiple_choice = MultipleChoiceMissionSerializer(required=False)
+
+    class Meta:
+        model = Mission
+        fields = ["id", "course", "question", "type", "exam_type", "multiple_choice"]
+
+    def create(self, validated_data):
+        multiple_choice_data = validated_data.pop("multiple_choice", None)
+        mission = Mission.objects.create(**validated_data)
+        if multiple_choice_data and mission.type == "multiple_choice":
+            MultipleChoiceMission.objects.create(
+                mission=mission, **multiple_choice_data
+            )
+        return mission
+
+    def update(self, instance, validated_data):
+        multiple_choice_data = validated_data.pop("multiple_choice", None)
+        instance = super().update(instance, validated_data)
+        if multiple_choice_data and instance.type == "multiple_choice":
+            MultipleChoiceMission.objects.update_or_create(
+                mission=instance, defaults=multiple_choice_data
+            )
+        return instance
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.type == "multiple_choice":
+            multiple_choice = instance.multiple_choice
+            if multiple_choice:
+                representation["multiple_choice"] = MultipleChoiceMissionSerializer(
+                    multiple_choice
+                ).data
+        return representation
+
+
+class MultipleChoiceSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MultipleChoiceSubmission
+        fields = ["selected_option"]
 
 
 class MissionSubmissionSerializer(serializers.ModelSerializer):
+    multiple_choice = MultipleChoiceSubmissionSerializer(required=False)
+
     class Meta:
         model = MissionSubmission
-        fields = ["id", "user", "mission", "submission", "is_correct", "submitted_at"]
+        fields = [
+            "id",
+            "user",
+            "mission",
+            "submitted_at",
+            "is_correct",
+            "multiple_choice",
+        ]
+
+    def create(self, validated_data):
+        multiple_choice_data = validated_data.pop("multiple_choice", None)
+        submission = MissionSubmission.objects.create(**validated_data)
+        if multiple_choice_data:
+            MultipleChoiceSubmission.objects.create(
+                submission=submission, **multiple_choice_data
+            )
+        return submission

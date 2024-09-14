@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "accounts",
+    "missions",
     "courses",
     "progress",
-    "missions",
     "certificates",
     "payments",
 ]
