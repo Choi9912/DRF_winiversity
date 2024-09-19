@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Payment
+from .models import Payment, Coupon
 
 
 class PaymentSerializer(serializers.ModelSerializer):
@@ -7,3 +7,9 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = "__all__"
         read_only_fields = ["payment_date", "is_refunded"]
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = "__all__"

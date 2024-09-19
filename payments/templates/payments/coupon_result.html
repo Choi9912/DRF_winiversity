@@ -1,0 +1,7 @@
+{% extends 'payments/base.html' %}
+
+{% block content %}
+<h1>Coupon Applied</h1>
+<p>Discounted amount: {{ discounted_amount }}원</p>
+<a href="{% url 'payment-list' %}">Back to Payment List</a>
+{% endblock %}
