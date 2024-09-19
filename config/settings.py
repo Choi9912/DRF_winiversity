@@ -164,3 +164,7 @@ CORS_ALLOW_ALL_ORIGINS = True  # Only for development, configure properly for pr
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+
+TOSS_API_KEY = "test_sk_GePWvyJnrKQE66WGabZ73gLzN97E"
+TOSS_SECRET_KEY = "test_sk_GePWvyJnrKQE66WGabZ73gLzN97E"
+TOSS_CLIENT_KEY = "test_ck_oEjb0gm23PY01NyzDazoVpGwBJn5"

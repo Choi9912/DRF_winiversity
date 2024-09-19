@@ -1,12 +1,15 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import PaymentViewSet
 
-router = DefaultRouter()
-router.register(r"", PaymentViewSet, basename="payment")
-
 urlpatterns = [
-    path("", include(router.urls)),
+    path(
+        "",
+        PaymentViewSet.as_view({"get": "list", "post": "create"}),
+        name="payment-list",
+    ),
+    path(
+        "<int:pk>/", PaymentViewSet.as_view({"get": "retrieve"}), name="payment-detail"
+    ),
     path(
         "<int:pk>/refund/",
         PaymentViewSet.as_view({"post": "refund"}),
@@ -18,13 +21,13 @@ urlpatterns = [
         name="payment-receipt",
     ),
     path(
-        "history/",
+        "payment-history/",
         PaymentViewSet.as_view({"get": "payment_history"}),
-        name="payment-history",
+        name="payment-payment-history",
     ),
     path(
         "apply-coupon/",
-        PaymentViewSet.as_view({"post": "apply_coupon"}),
-        name="apply-coupon",
+        PaymentViewSet.as_view({"get": "apply_coupon", "post": "apply_coupon"}),
+        name="payment-apply-coupon",
     ),
 ]
