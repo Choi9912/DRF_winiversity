@@ -2,9 +2,10 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
-from django.shortcuts import get_object_or_404
 from .models import Mission, MissionSubmission
 from .serializers import MissionSerializer, MissionSubmissionSerializer
+from io import StringIO
+import sys
 
 
 class MissionViewSet(viewsets.ModelViewSet):
@@ -81,6 +82,89 @@ class MissionViewSet(viewsets.ModelViewSet):
         return Response(
             {"error": "Invalid mission type"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    @action(detail=True, methods=["post"])
+    def submit_code(self, request, pk=None):
+        mission = self.get_object()
+        if not hasattr(mission, "code_submission"):
+            return Response(
+                {"error": "This is not a code submission mission."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        submitted_code = request.data.get("code")
+        if not submitted_code:
+            return Response(
+                {"error": "No code submitted."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 코드 실행 및 채점 로직
+        is_correct, output = self.execute_and_grade_code(
+            mission.code_submission, submitted_code
+        )
+
+        # 제출 결과 저장
+        submission = MissionSubmission.objects.create(
+            user=request.user,
+            mission=mission,
+            submitted_answer=submitted_code,  # 이 부분이 모델 필드와 일치해야 합니다
+            is_correct=is_correct,
+        )
+
+        if request.accepted_renderer.format == "html":
+            return Response(
+                {
+                    "mission": mission,
+                    "submission_result": {"is_correct": is_correct, "output": output},
+                },
+                template_name="missions/mission_detail.html",
+            )
+        return Response({"is_correct": is_correct, "output": output})
+
+    def execute_and_grade_code(self, code_mission, submitted_code):
+        original_stdout = sys.stdout
+        redirected_output = StringIO()
+        sys.stdout = redirected_output
+
+        outputs = []  # 여기서 outputs 리스트를 초기화합니다.
+        all_correct = True
+
+        try:
+            # 제출된 코드 실행
+            exec(submitted_code, globals())
+
+            # 테스트 케이스 실행
+            for test_case in code_mission.test_cases:
+                input_data = test_case["input"]
+                expected_output = test_case["output"]
+
+                try:
+                    # solution 함수 호출
+                    actual_output = solution(input_data)
+
+                    if actual_output == expected_output:
+                        outputs.append(
+                            f"Test case passed: Input: {input_data}, Output: {actual_output}"
+                        )
+                    else:
+                        all_correct = False
+                        outputs.append(
+                            f"Test case failed: Input: {input_data}, Expected: {expected_output}, Got: {actual_output}"
+                        )
+                except Exception as e:
+                    all_correct = False
+                    outputs.append(
+                        f"Error in test case: Input: {input_data}, Error: {str(e)}"
+                    )
+
+        except Exception as e:
+            all_correct = False
+            outputs.append(f"Error occurred: {str(e)}")
+
+        finally:
+            sys.stdout = original_stdout
+
+        return all_correct, "\n".join(outputs)
 
 
 class MissionSubmissionViewSet(viewsets.ModelViewSet):
