@@ -5,18 +5,29 @@
 <p>과목: {{ mission.get_course_display }}</p>
 <p>유형: {{ mission.get_type_display }}</p>
 
-<form method="post" action="{% url 'mission-submit' mission.id %}">
-    {% csrf_token %}
-    {% if mission.type == 'multiple_choice' %}
+{% if mission.type == 'multiple_choice' %}
+    <form method="post" action="{% url 'mission-submit' mission.id %}">
+        {% csrf_token %}
         {% for option in mission.multiple_choice.get_options %}
             <div>
                 <input type="radio" id="option{{ forloop.counter }}" name="selected_option" value="{{ forloop.counter0 }}">
                 <label for="option{{ forloop.counter }}">{{ option }}</label>
             </div>
         {% endfor %}
-    {% endif %}
-    <button type="submit">제출</button>
-</form>
+        <button type="submit">제출</button>
+    </form>
+{% elif mission.type == 'code_submission' %}
+    <h2>문제 설명</h2>
+    <p>{{ mission.code_submission.problem_description }}</p>
+    
+    <h2>초기 코드</h2>
+    
+    <form method="post" action="{% url 'mission-submit-code' mission.id %}">
+        {% csrf_token %}
+        <textarea name="code" rows="10" cols="50">{{ mission.code_submission.initial_code }}</textarea>
+        <button type="submit">코드 제출</button>
+    </form>
+{% endif %}
 
 {% if submission_result %}
     <div>
@@ -25,8 +36,35 @@
         {% else %}
             <p style="color: red;">틀렸습니다. 다시 시도해보세요.</p>
         {% endif %}
+        {% if submission_result.output %}
+            <h3>실행 결과:</h3>
+            <pre>{{ submission_result.output }}</pre>
+        {% endif %}
     </div>
 {% endif %}
 
 <a href="{% url 'mission-list' %}">미션 목록으로 돌아가기</a>
+{% endblock %}
+{% block extra_js %}
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/javascript");
+
+    document.getElementById('submit-code').addEventListener('click', function() {
+        var code = editor.getValue();
+        fetch("{% url 'mission-submit-code' mission.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({code: code})
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('result').innerHTML = data.output;
+        });
+    });
+</script>
 {% endblock %}
