@@ -55,10 +55,14 @@ class MultipleChoiceMission(models.Model):
 
 
 class MissionSubmission(models.Model):
-    mission = models.ForeignKey(Mission, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    mission = models.ForeignKey("Mission", on_delete=models.CASCADE)
+    submitted_answer = models.TextField()  # 이 필드를 추가합니다
+    is_correct = models.BooleanField()
     submitted_at = models.DateTimeField(auto_now_add=True)
-    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username}'s submission for {self.mission.question}"
 
 
 class MultipleChoiceSubmission(models.Model):
@@ -66,3 +70,15 @@ class MultipleChoiceSubmission(models.Model):
         MissionSubmission, on_delete=models.CASCADE, related_name="multiple_choice"
     )
     selected_option = models.CharField(max_length=1)  # A, B, C, D, E 중 하나
+
+
+class CodeSubmissionMission(models.Model):
+    mission = models.OneToOneField(
+        Mission, on_delete=models.CASCADE, related_name="code_submission"
+    )
+    problem_description = models.TextField()
+    initial_code = models.TextField()
+    test_cases = models.JSONField()  # 입력과 예상 출력을 포함한 테스트 케이스
+
+    def __str__(self):
+        return f"Code Submission for {self.mission.question}"
