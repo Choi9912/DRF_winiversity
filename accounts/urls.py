@@ -2,8 +2,10 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, HomeView
 
+
 router = DefaultRouter()
 router.register(r"users", UserViewSet)
+
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
@@ -23,5 +25,30 @@ urlpatterns = [
         "users/list-view/",
         UserViewSet.as_view({"get": "list_view"}),
         name="user-list-view",
+    ),
+    path(
+        "profile/",
+        UserViewSet.as_view({"get": "profile"}),
+        name="user-profile",
+    ),
+    path(
+        "profile/update/",
+        UserViewSet.as_view({"post": "update_profile"}),
+        name="update-profile",
+    ),
+    path(
+        "deactivate/",
+        UserViewSet.as_view({"post": "deactivate"}),
+        name="deactivate-account",
+    ),
+    path(
+        "certificate/download/",
+        UserViewSet.as_view({"get": "download_certificate"}),
+        name="download-certificate",
+    ),
+    path(
+        "admin/dashboard/",
+        UserViewSet.as_view({"get": "admin_dashboard"}),
+        name="admin-dashboard",
     ),
 ]
