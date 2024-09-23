@@ -7,12 +7,16 @@ from .models import User, Enrollment, Course
 from .serializers import UserSerializer, UserRegistrationSerializer
 from django.utils import timezone
 from datetime import timedelta
-
 from django.views.generic import TemplateView
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class HomeView(TemplateView):
     template_name = "accounts/home.html"
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -20,7 +24,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['create', 'login', 'logout', 'list_view']:
+        if self.action in ['create', 'login', 'logout', 'list_view', 'register']:
             return [permissions.AllowAny()]
         return super().get_permissions()
 
@@ -28,11 +32,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def register(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            user.subscription_end_date = timezone.now() + timedelta(days=730)  # 2년
-            user.save()
-            login(request, user)
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            try:
+                user = serializer.save()
+                user.subscription_end_date = timezone.now() + timedelta(days=730)  # 2년
+                user.save()
+                login(request, user)
+                return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                logger.error(f"Error during user registration: {str(e)}")
+                return Response({'error': 'An unexpected error occurred during registration.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.warning(f"Invalid registration data: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
