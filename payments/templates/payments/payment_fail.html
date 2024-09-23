@@ -1,0 +1,9 @@
+{% extends 'payments/base.html' %}
+
+{% block content %}
+<h1>결제 성공</h1>
+<p>결제가 성공적으로 완료되었습니다.</p>
+<p>결제 금액: {{ payment.amount }}원</p>
+<p>결제 방법: {{ payment.get_payment_method_display }}</p>
+<a href="{% url 'payment-list' %}">결제 내역 보기</a>
+{% endblock %}

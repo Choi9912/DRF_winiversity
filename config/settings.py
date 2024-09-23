@@ -165,6 +165,9 @@ CORS_ALLOW_ALL_ORIGINS = True  # Only for development, configure properly for pr
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 
-TOSS_API_KEY = "test_sk_GePWvyJnrKQE66WGabZ73gLzN97E"
-TOSS_SECRET_KEY = "test_sk_GePWvyJnrKQE66WGabZ73gLzN97E"
-TOSS_CLIENT_KEY = "test_ck_oEjb0gm23PY01NyzDazoVpGwBJn5"
+# iamport 설정
+IAMPORT_SHOP_ID = "imp06350358"
+IAMPORT_API_KEY = "3064286181271330"
+IAMPORT_API_SECRET = (
+    "wn818BmZGnc3ngXXzaQkJ7rfB1FjtLWL83Ur3wMu8HCTCMWL6eiQTs36oOeV1czCseY"
+)
