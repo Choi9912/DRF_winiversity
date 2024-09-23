@@ -122,4 +122,5 @@ class PaymentViewSet(viewsets.ModelViewSet):
             )
 
 
-# 테스트
+# 테스트1234
+class CouponViewSet(viewsets.ModelViewSet):
