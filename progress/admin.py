@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import UserProgress, DailyVisitor, PageView
 
-# Register your models here.
+admin.site.register(UserProgress)
+admin.site.register(DailyVisitor)
+admin.site.register(PageView)
