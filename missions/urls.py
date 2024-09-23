@@ -8,7 +8,6 @@ router.register(r"api/submissions", MissionSubmissionViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
-    # HTML 템플릿 렌더링을 위한 URL 패턴
     path("missions/", MissionViewSet.as_view({"get": "list"}), name="mission-list"),
     path(
         "missions/<int:pk>/",

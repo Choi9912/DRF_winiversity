@@ -1,0 +1,37 @@
+{% extends 'payments/base.html' %}
+
+{% block content %}
+<h1>결제 준비 (테스트 모드)</h1>
+<button onclick="requestPay()">결제하기</button>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.2.0.js"></script>
+
+<script>
+    var IMP = window.IMP;
+    IMP.init('imp00000000'); // 테스트 모드 가맹점 식별코드
+
+    function requestPay() {
+        IMP.request_pay({
+            pg: "html5_inicis",
+            pay_method: "card",
+            merchant_uid: "ORD" + new Date().getTime(),
+            name: "테스트 상품",
+            amount: 1000,
+            buyer_email: "test@example.com",
+            buyer_name: "테스트 구매자",
+            buyer_tel: "010-1234-5678",
+            buyer_addr: "서울특별시 강남구 삼성동",
+            buyer_postcode: "123-456"
+        }, function (rsp) {
+            if (rsp.success) {
+                console.log("결제 성공 (테스트)", rsp);
+                alert("테스트 결제가 성공했습니다!");
+            } else {
+                console.log("결제 실패 (테스트)", rsp);
+                alert("테스트 결제에 실패했습니다. 에러 내용: " + rsp.error_msg);
+            }
+        });
+    }
+</script>
+{% endblock %}
