@@ -1,10 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
 from .models import Payment, Coupon
 from .serializers import PaymentSerializer, CouponSerializer
+from courses.models import Course, CourseProgress
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -13,13 +14,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        amount = self.request.data.get("amount")  # 클라이언트로부터 금액을 받아옴
-        payment = serializer.save(user=self.request.user, amount=amount)
-        # 구독 기간 설정 로직은 금액에 따라 다르게 적용할 수 있습니다.
-        self.request.user.subscription_end_date = timezone.now() + timezone.timedelta(
-            days=730
-        )
-        self.request.user.save()
+        course_id = self.request.data.get("course_id")
+        course = get_object_or_404(Course, id=course_id)
+        amount = course.amount
+        payment = serializer.save(user=self.request.user, amount=amount, course=course)
+
+        # 코스 결제 후 처리 (예: 사용자에게 코스 접근 권한 부여)
+        # 이 부분은 프로젝트의 요구사항에 따라 구현해야 합니다.
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -120,3 +121,42 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 {"detail": "Invalid or expired coupon."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+    @action(detail=False, methods=["post"])
+    def pay_for_course(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        course = serializer.validated_data["course"]
+        amount = course.amount
+
+        coupon_code = request.data.get("coupon_code")
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(
+                    code=coupon_code,
+                    is_active=True,
+                    valid_from__lte=timezone.now(),
+                    valid_to__gte=timezone.now(),
+                )
+                amount *= 1 - coupon.discount / 100
+            except Coupon.DoesNotExist:
+                return Response(
+                    {"error": "Invalid or expired coupon."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        payment = serializer.save(amount=amount, user=request.user)
+
+        # 결제 성공 후 CourseProgress 객체 생성
+        CourseProgress.objects.get_or_create(user=request.user, course=course)
+
+        return Response(
+            {
+                "message": "Payment successful.",
+                "payment_id": payment.id,
+                "amount": amount,
+                "course": course.name,
+            },
+            status=status.HTTP_201_CREATED,
+        )
