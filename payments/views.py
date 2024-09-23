@@ -120,3 +120,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 {"detail": "Invalid or expired coupon."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+# 테스트
