@@ -19,12 +19,14 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("accounts.urls")),
-    path("courses/", include("courses.urls")),
-    path("progress/", include("progress.urls")),
-    path("missions/", include("missions.urls")),
-    path("certificates/", include("certificates.urls")),
-    path("payments/", include("payments.urls")),
+    path("api/v1/", include([
+        path("accounts/", include("accounts.urls")),
+        path("courses/", include("courses.urls")),
+        path("progress/", include("progress.urls")),
+        path("missions/", include("missions.urls")),
+        path("certificates/", include("certificates.urls")),
+        path("payments/", include("payments.urls")),
+    ])),
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),
