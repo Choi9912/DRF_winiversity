@@ -19,7 +19,8 @@ class UserProgressViewSet(viewsets.ModelViewSet):
         # 관리자는 모든 유저의 progress 조회 가능, 일반 유저는 자신의 것만 조회 가능
         if user.is_staff or user.is_superuser:
             return UserProgress.objects.all().order_by('id')  # 정렬 추가
-        return UserProgress.objects.filter(user=user).order_by('id')  # 정렬 추가
+        return UserProgress.objects.filter(user=user)  # 정렬 추가
+
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -29,6 +30,11 @@ class UserProgressViewSet(viewsets.ModelViewSet):
         progress, created = UserProgress.objects.get_or_create(user=user, lesson=lesson)
         serializer.instance = progress
         serializer.save()
+
+
+
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
     def admin_dashboard(self, request):
