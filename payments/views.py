@@ -1,8 +1,8 @@
-from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from .models import Payment, Coupon
 from .serializers import PaymentSerializer, CouponSerializer
 from courses.models import Course, CourseProgress
@@ -24,17 +24,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        if request.accepted_renderer.format == "html":
-            return render(request, "payments/payment_list.html", {"payments": queryset})
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        if request.accepted_renderer.format == "html":
-            return render(
-                request, "payments/payment_detail.html", {"payment": instance}
-            )
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -62,10 +56,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def receipt(self, request, pk=None):
         payment = self.get_object()
-        if request.accepted_renderer.format == "html":
-            return render(
-                request, "payments/payment_receipt.html", {"payment": payment}
-            )
         receipt_data = {
             "payment_id": payment.id,
             "amount": payment.amount,
@@ -77,18 +67,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def payment_history(self, request):
         payments = Payment.objects.filter(user=request.user)
-        if request.accepted_renderer.format == "html":
-            return render(
-                request, "payments/payment_history.html", {"payments": payments}
-            )
         serializer = self.get_serializer(payments, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=["get", "post"])
+    @action(detail=False, methods=["post"])
     def apply_coupon(self, request):
-        if request.method == "GET":
-            return render(request, "payments/apply_coupon.html")
-
         coupon_code = request.data.get("coupon_code")
         try:
             coupon = Coupon.objects.get(
@@ -98,12 +81,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 valid_to__gte=timezone.now(),
             )
             discounted_amount = 50000 * (1 - coupon.discount / 100)
-            if request.accepted_renderer.format == "html":
-                return render(
-                    request,
-                    "payments/coupon_result.html",
-                    {"discounted_amount": discounted_amount},
-                )
             return Response(
                 {
                     "discounted_amount": discounted_amount,
@@ -111,12 +88,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 }
             )
         except Coupon.DoesNotExist:
-            if request.accepted_renderer.format == "html":
-                return render(
-                    request,
-                    "payments/apply_coupon.html",
-                    {"error": "Invalid or expired coupon."},
-                )
             return Response(
                 {"detail": "Invalid or expired coupon."},
                 status=status.HTTP_400_BAD_REQUEST,

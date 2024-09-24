@@ -9,16 +9,19 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
 import uuid
-from django.utils import timezone  # 이 줄을 추가하세요
+from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
 
 
 class CertificateViewSet(viewsets.ModelViewSet):
-    queryset = Certificate.objects.all()
     serializer_class = CertificateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
+    queryset = Certificate.objects.none()  # 기본 빈 쿼리셋 추가
 
     def get_queryset(self):
-        return Certificate.objects.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            return Certificate.objects.filter(user=self.request.user)
+        return Certificate.objects.none()
 
     def perform_create(self, serializer):
         verification_code = uuid.uuid4().hex
@@ -59,7 +62,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
                     {
                         "valid": True,
                         "user": certificate.user.get_full_name(),
-                        "course": certificate.course.name,  # 'title'을 'name'으로 변경
+                        "course": certificate.course.name,
                         "issue_date": certificate.issue_date,
                     }
                 )
@@ -69,7 +72,6 @@ class CertificateViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def expiring_soon(self, request):
-        # 예: 30일 이내 만료 예정인 수료증
         soon = timezone.now() + timezone.timedelta(days=30)
         certificates = self.get_queryset().filter(
             issue_date__lte=soon - timezone.timedelta(days=365)

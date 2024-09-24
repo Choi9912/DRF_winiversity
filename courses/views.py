@@ -4,14 +4,13 @@ from rest_framework.response import Response
 from django.db.models import ProtectedError
 from .models import Course, Lesson, CourseProgress
 from .serializers import CourseSerializer, LessonSerializer
-from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
 
 class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.prefetch_related("lessons").all().order_by("order")
+    queryset = Course.objects.all().order_by("order")
     serializer_class = CourseSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # 임시로 모든 접근 허용
 
     @action(detail=True, methods=["get"])
     def lessons(self, request, pk=None):
@@ -21,7 +20,7 @@ class CourseViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()  # 복사본 생성
+        data = request.data.copy()
         lessons_data = data.pop("lessons", [])
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -93,7 +92,6 @@ class LessonViewSet(viewsets.ModelViewSet):
         lesson = self.get_object()
         course = lesson.course
         try:
-            # 이 레슨이 다른 레슨의 선행 조건인지 확인
             if Lesson.objects.filter(prerequisite=lesson).exists():
                 return Response(
                     {
@@ -102,14 +100,12 @@ class LessonViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # 이 레슨이 마지막으로 완료한 레슨인 진행 상황 업데이트
             CourseProgress.objects.filter(last_completed_lesson=lesson).update(
                 last_completed_lesson=lesson.prerequisite
             )
 
             lesson.delete()
 
-            # 코스의 남은 레슨들의 순서 재정렬
             remaining_lessons = course.lessons.all().order_by("order")
             for index, remaining_lesson in enumerate(remaining_lessons, start=1):
                 remaining_lesson.order = index
