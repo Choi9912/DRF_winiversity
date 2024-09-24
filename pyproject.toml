@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "poetry add $(get-content requirements-txt)"
+version = "0.1.0"
+description = ""
+authors = ["Choi9912 <vkvkdl23@naver.com>"]
+readme = "README.md"
+packages = [{include = "poetry add $(get_content requirements"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+asgiref = "3.8.1"
+certifi = "2024.2.2"
+chardet = "4.0.0"
+charset-normalizer = "2.0.12"
+django = "5.1.1"
+django-cors-headers = "4.3.1"
+django-filter = "23.5"
+djangorestframework = "3.14.0"
+docker = "7.0.0"
+idna = "3.6"
+packaging = "24.1"
+pillow = "10.2.0"
+psycopg2-binary = "2.9.9"
+python-dotenv = "1.0.1"
+pytz = "2024.2"
+pywin32 = {version = "306", markers = "sys_platform == \"win32\""}
+reportlab = "4.1.0"
+requests = "2.26.0"
+sqlparse = "0.4.4"
+tzdata = "2024.1"
+urllib3 = "1.26.15"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
