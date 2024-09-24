@@ -10,8 +10,13 @@ ENV PYTHONUNBUFFERED 1
 
 # 시스템 의존성을 설치합니다
 RUN apt-get update && apt-get install -y --no-install-recommends \
+<<<<<<< HEAD
     gcc \
     && rm -rf /var/lib/apt/lists/*
+=======
+gcc \
+&& rm -rf /var/lib/apt/lists/*
+>>>>>>> 957ebb7de90d7b145facc0c13208aa665c18b9c3
 
 # Poetry 설치
 RUN pip install poetry
